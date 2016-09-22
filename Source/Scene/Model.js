@@ -14,6 +14,7 @@ define([
         '../Core/deprecationWarning',
         '../Core/destroyObject',
         '../Core/DeveloperError',
+        '../Core/DistanceDisplayCondition',
         '../Core/FeatureDetection',
         '../Core/getAbsoluteUri',
         '../Core/getBaseUri',
@@ -74,6 +75,7 @@ define([
         deprecationWarning,
         destroyObject,
         DeveloperError,
+        DistanceDisplayCondition,
         FeatureDetection,
         getAbsoluteUri,
         getBaseUri,
@@ -548,6 +550,8 @@ define([
         this.debugWireframe = defaultValue(options.debugWireframe, false);
         this._debugWireframe = false;
 
+        this._distanceDisplayCondition = options.distanceDisplayCondition;
+
         // Undocumented options
         this._precreatedAttributes = options.precreatedAttributes;
         this._vertexShaderLoaded = options.vertexShaderLoaded;
@@ -910,6 +914,22 @@ define([
                 var castShadows = ShadowMode.castShadows(this.shadows);
                 var receiveShadows = value;
                 this.shadows = ShadowMode.fromCastReceive(castShadows, receiveShadows);
+            }
+        },
+
+        distanceDisplayCondition : {
+            get : function() {
+                return this._distanceDisplayCondition;
+            },
+            set : function(value) {
+                //>>includeStart('debug', pragmas.debug);
+                if (defined(value) && value.far <= value.near) {
+                    throw new DeveloperError('far must be greater than near');
+                }
+                //>>includeEnd('debug');
+                if (!DistanceDisplayCondition.equals(value, this._distanceDisplayCondition)) {
+                    this._distanceDisplayCondition = DistanceDisplayCondition.clone(value, this._distanceDisplayCondition);
+                }
             }
         }
     });
@@ -3719,7 +3739,8 @@ define([
             }
         }
 
-        var show = this.show && (this.scale !== 0.0);
+        var displayConditionPassed = defined(this.distanceDisplayCondition) ? this.distanceDisplayCondition.isVisible(this, frameState) : true;
+        var show = this.show && displayConditionPassed && (this.scale !== 0.0);
 
         if ((show && this._state === ModelState.LOADED) || justLoaded) {
             var animated = this.activeAnimations.update(frameState) || this._cesiumAnimationsDirty;
