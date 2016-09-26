@@ -70,7 +70,14 @@ define([
                     if (!defined(targetFrameRate)) {
                         widget.resize();
                         widget.render();
-                        requestAnimationFrame(render);
+                        if(widget.scene._vrDevice && widget.scene._vrDevice.isPresenting ) {
+                            var frameData = new VRFrameData();
+                            widget.scene._vrDevice.requestAnimationFrame(render);
+                            widget.scene._vrDevice.getFrameData(frameData);
+                            widget.scene._vrDevice.submitFrame();
+                        }else{
+                            requestAnimationFrame(render);
+                        }
                     } else {
                         var interval = 1000.0 / targetFrameRate;
                         var delta = frameTime - lastFrameTime;

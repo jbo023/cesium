@@ -604,6 +604,7 @@ define([
         };
 
         this._useWebVR = false;
+        this._vrDevice = undefined;
         this._cameraVR = undefined;
         this._aspectRatioVR = undefined;
 

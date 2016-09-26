@@ -66,14 +66,26 @@ define([
             Fullscreen.exitFullscreen();
             isVRMode(false);
         } else {
-            if (!Fullscreen.fullscreen) {
-                Fullscreen.requestFullscreen(viewModel._vrElement);
-            }
-            viewModel._noSleep.enable();
-            if (!viewModel._locked) {
-                viewModel._locked = lockScreen('landscape');
-            }
+
             scene.useWebVR = true;
+            viewModel._noSleep.enable();
+            if(viewModel._vrDevice){
+                viewModel._vrDevice.requestPresent([{ source: scene.canvas }]).then(function (ex) {
+                        scene._vrDevice = viewModel._vrDevice;
+                        Fullscreen.requestFullscreen(viewModel._vrElement, scene._vrDevice);
+                        console.log("vr Presenting");
+                    }, function (ex) {
+                        console.log("requestPresent failed.");
+                    }
+                );
+            }else{
+                if (!Fullscreen.fullscreen) {
+                    Fullscreen.requestFullscreen(viewModel._vrElement);
+                }
+                if (!viewModel._locked) {
+                    viewModel._locked = lockScreen('landscape');
+                }
+            }
             isVRMode(true);
         }
     }
@@ -159,6 +171,14 @@ define([
                 isVRMode(false);
             }
         };
+
+        navigator.getVRDisplays().then(function(displays) {
+            if(displays.length > 0) {
+                that._vrDevice = displays[0];
+            }
+        });
+
+
         document.addEventListener(Fullscreen.changeEventName, this._callback);
     }
 
